@@ -1,0 +1,23 @@
+# VRChat Discord Uploader Dependencies
+# Python 3.10+
+
+# GUI Framework
+PyQt6>=6.6.0
+
+# Image Processing
+Pillow>=10.2.0
+
+# File System Monitoring
+watchdog>=4.0.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Encryption
+cryptography>=42.0.0
+
+# Logging
+loguru>=0.7.2
+
+# Build (development only)
+pyinstaller>=6.3.0
