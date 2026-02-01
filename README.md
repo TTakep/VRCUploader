@@ -46,7 +46,7 @@ pyinstaller --onefile --windowed --name "VRChatDiscordUploader" main.py
 ## 使い方
 
 1. **初回起動**: アプリを起動し、設定画面からDiscord Webhook URLを入力
-2. **Webhook取得方法**: Discord サーバー設定 → ウェブフック → 「新しいウェブフック」作成 → URLをコピー
+2. **Webhook取得方法**: Discord サーバー設定 → 連携サービス → ウェブフック → 「新しいウェブフック」作成 → チャンネルを指定 → URLをコピー
 3. **監視開始**: メイン画面の「▶️ 開始」ボタンをクリック
 4. **自動転送**: VRChatで撮影すると自動的にDiscordに転送されます
 
