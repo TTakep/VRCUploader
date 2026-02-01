@@ -141,6 +141,12 @@ class MainWindow(QMainWindow):
     def _setup_ui(self):
         """UIをセットアップ"""
         self.setWindowTitle(f"{APP_NAME} v{APP_VERSION}")
+        
+        # アイコン設定
+        icon_path = Path(__file__).parent.parent / "assets" / "icon.ico"
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
+
         # メインコンテナとStackedWidget
         container = QWidget()
         self.setCentralWidget(container)
@@ -249,9 +255,11 @@ class MainWindow(QMainWindow):
         """タスクトレイをセットアップ"""
         self.system_tray = SystemTray(self)
         
-        # デフォルトアイコン（アプリアイコンがない場合）
-        icon = self.windowIcon()
-        if icon.isNull():
+        # デフォルトアイコン
+        icon_path = Path(__file__).parent.parent / "assets" / "icon.ico"
+        if icon_path.exists():
+            icon = QIcon(str(icon_path))
+        else:
             icon = QApplication.style().standardIcon(
                 QApplication.style().StandardPixmap.SP_ComputerIcon
             )

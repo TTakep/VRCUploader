@@ -21,6 +21,14 @@ env/
 # Logs
 *.log
 
+# Application Data
+config.json
+*.db
+*.db-journal
+
+# Temporary / Scripts
+convert_icon.py
+
 # System
 SerializedKeyStore
 .DS_Store

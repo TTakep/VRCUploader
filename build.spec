@@ -16,7 +16,7 @@ a = Analysis(
     pathex=[str(project_root)],
     binaries=[],
     datas=[
-        # アイコンなどのリソースがあれば追加
+        ('src/assets/icon.ico', 'src/assets'),
     ],
     hiddenimports=[
         'PyQt6.QtCore',
@@ -69,5 +69,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # アイコンファイルがあれば指定: icon='src/gui/icons/app.ico'
+    icon='src/assets/icon.ico',
 )
