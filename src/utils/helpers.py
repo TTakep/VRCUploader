@@ -31,9 +31,11 @@ def format_file_size(size_bytes: int) -> str:
         return f"{size_bytes / (1024 * 1024):.1f} MB"
 
 
-def get_current_month_thread_name() -> str:
-    """現在の月のスレッド名を取得 (YYYY-MM形式)"""
-    return datetime.now().strftime("%Y-%m")
+def get_month_thread_name(dt: Optional[datetime] = None) -> str:
+    """指定された月（指定がない場合は現在）のスレッド名を取得 (YYYY-MM形式)"""
+    if dt is None:
+        dt = datetime.now()
+    return dt.strftime("%Y-%m")
 
 
 def parse_vrchat_filename(filename: str) -> Optional[datetime]:

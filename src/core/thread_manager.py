@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 from datetime import datetime
 
 from src.utils.logger import get_logger
-from src.utils.helpers import get_current_month_thread_name
+from src.utils.helpers import get_month_thread_name
 from src.db.repository import transfer_repository
 
 logger = get_logger()
@@ -19,13 +19,16 @@ class ThreadManager:
         self.webhook_url = webhook_url
         self._thread_cache: dict[str, str] = {}  # month -> thread_id
     
-    def get_or_create_monthly_thread(self) -> Tuple[Optional[str], Optional[str]]:
-        """現在月のスレッドIDを取得または作成
+    def get_or_create_monthly_thread(self, image_date: Optional[datetime] = None) -> Tuple[Optional[str], Optional[str]]:
+        """指定された日付の月のスレッドIDを取得または作成
         
+        Args:
+            image_date: 画像の日付。未指定の場合は現在時刻。
+            
         Returns:
             Tuple[スレッドID, エラーメッセージ]
         """
-        thread_name = get_current_month_thread_name()
+        thread_name = get_month_thread_name(image_date)
         
         # 1. キャッシュを確認
         if thread_name in self._thread_cache:

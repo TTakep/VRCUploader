@@ -61,16 +61,21 @@ class TransferWorker(QThread):
             processed_path, original_size, final_size, was_compressed = \
                 self.processor.process_image(self.image_path)
             
+            # 日付を解析 (ファイル名から、失敗した場合は更新日時)
+            from src.utils.helpers import parse_vrchat_filename, get_file_modified_time
+            image_date = parse_vrchat_filename(filename)
+            if not image_date:
+                image_date = get_file_modified_time(self.image_path)
+            
             # スレッドIDを取得
             thread_id = None
             if self.enable_monthly_thread and self.thread_manager:
-                thread_id, error = self.thread_manager.get_or_create_monthly_thread()
+                thread_id, error = self.thread_manager.get_or_create_monthly_thread(image_date)
                 if error:
                     if error == "TEXT_CHANNEL_LIMIT":
                         logger.warning("テキストチャンネルのためスレッドを作成できませんでした。通常の投稿を行います。")
-                        # 以降このセッションではスレッド作成を試行しないようにキャッシュに空文字を入れる（任意）
                     else:
-                        logger.warning(f"スレッド作成エラー: {error}")
+                        logger.warning(f"スレッド作成エラー (日付: {image_date}): {error}")
             
             # 送信
             success, message_id, error = self.webhook.send_image(
