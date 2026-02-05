@@ -287,9 +287,15 @@ class MainWindow(QMainWindow):
         """設定を読み込み"""
         config = config_manager.config
         
-        # クイック設定を反映
-        self.auto_startup_check.setChecked(config.enable_auto_startup)
-        self.minimize_tray_check.setChecked(config.enable_minimize_to_tray)
+        # クイック設定を反映 (シグナルをブロックして誤保存を防止)
+        self.auto_startup_check.blockSignals(True)
+        self.minimize_tray_check.blockSignals(True)
+        try:
+            self.auto_startup_check.setChecked(config.enable_auto_startup)
+            self.minimize_tray_check.setChecked(config.enable_minimize_to_tray)
+        finally:
+            self.auto_startup_check.blockSignals(False)
+            self.minimize_tray_check.blockSignals(False)
         
         # Webhookを設定
         if config.webhook_url:

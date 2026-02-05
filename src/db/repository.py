@@ -124,11 +124,22 @@ class TransferRepository:
         conn = self._get_connection()
         cursor = conn.cursor()
         
-        today = datetime.now().date().isoformat()
+        # ローカルタイムゾーンでの本日の開始時刻と終了時刻を計算
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        
+        # ローカル時刻をUTCに変換（JSTはUTC+9）
+        # DBはCURRENT_TIMESTAMPでUTCとして保存されているため
+        import time
+        utc_offset = timedelta(seconds=time.timezone if time.daylight == 0 else time.altzone)
+        today_start_utc = today_start + utc_offset
+        today_end_utc = today_end + utc_offset
+        
         cursor.execute("""
             SELECT COUNT(*) FROM transferred_images 
-            WHERE DATE(transferred_at) = ?
-        """, (today,))
+            WHERE transferred_at >= ? AND transferred_at < ?
+        """, (today_start_utc.strftime("%Y-%m-%d %H:%M:%S"), 
+              today_end_utc.strftime("%Y-%m-%d %H:%M:%S")))
         
         count = cursor.fetchone()[0]
         conn.close()
