@@ -47,7 +47,8 @@ class DiscordWebhook:
         image_path: Path,
         original_size: Optional[int] = None,
         compressed_size: Optional[int] = None,
-        thread_id: Optional[str] = None
+        thread_id: Optional[str] = None,
+        world_name: Optional[str] = None
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """画像をDiscordに送信
         
@@ -71,33 +72,46 @@ class DiscordWebhook:
             compression_status = "圧縮なし"
         
         # Embedを構築
+        fields = [
+            {
+                "name": "ファイル名",
+                "value": filename,
+                "inline": False
+            }
+        ]
+        
+        # ワールド名フィールドを追加
+        if world_name:
+            fields.append({
+                "name": "🌍 撮影ワールド",
+                "value": world_name,
+                "inline": False
+            })
+        
+        fields.extend([
+            {
+                "name": "ファイルサイズ",
+                "value": size_info,
+                "inline": True
+            },
+            {
+                "name": "圧縮状況",
+                "value": compression_status,
+                "inline": True
+            },
+            {
+                "name": "撮影時刻",
+                "value": modified_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "inline": True
+            }
+        ])
+        
         embed = {
             "title": "📸 VRChat スクリーンショット",
             "description": "VRChat で撮影された写真が転送されました",
             "timestamp": datetime.utcnow().isoformat(),
             "color": DISCORD_EMBED_COLOR,
-            "fields": [
-                {
-                    "name": "ファイル名",
-                    "value": filename,
-                    "inline": False
-                },
-                {
-                    "name": "ファイルサイズ",
-                    "value": size_info,
-                    "inline": True
-                },
-                {
-                    "name": "圧縮状況",
-                    "value": compression_status,
-                    "inline": True
-                },
-                {
-                    "name": "撮影時刻",
-                    "value": modified_time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "inline": True
-                }
-            ],
+            "fields": fields,
             "image": {
                 "url": f"attachment://{filename}"
             },

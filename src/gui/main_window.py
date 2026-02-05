@@ -22,6 +22,7 @@ from src.core.discord_webhook import DiscordWebhook
 from src.core.thread_manager import ThreadManager
 from src.core.image_processor import ImageProcessor
 from src.core.file_watcher import FileWatcher
+from src.core.vrchat_log_parser import vrchat_log_parser
 from src.db.repository import transfer_repository
 from src.db.models import TransferRecord
 from src.gui.settings_widget import SettingsWidget
@@ -77,12 +78,20 @@ class TransferWorker(QThread):
                     else:
                         logger.warning(f"スレッド作成エラー (日付: {image_date}): {error}")
             
+            # ワールド名を取得
+            world_name = None
+            try:
+                world_name = vrchat_log_parser.get_world_name_at_time(image_date)
+            except Exception as e:
+                logger.warning(f"ワールド名の取得に失敗しました: {e}")
+            
             # 送信
             success, message_id, error = self.webhook.send_image(
                 processed_path,
                 original_size=original_size,
                 compressed_size=final_size if was_compressed else None,
-                thread_id=thread_id
+                thread_id=thread_id,
+                world_name=world_name
             )
             
             # 一時ファイルを削除
