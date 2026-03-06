@@ -19,12 +19,14 @@ class Config:
     """アプリケーション設定"""
     # Webhook設定
     webhook_url: str = ""
+    webhook_username: str = "VRChat 撮影転送"
     
     # 監視設定
     watch_folder: str = str(VRCHAT_DEFAULT_PICTURES_PATH)
     
     # 機能設定
     enable_monthly_thread: bool = True
+    enable_instance_users: bool = False
     enable_auto_startup: bool = False
     enable_minimize_to_tray: bool = True
     enable_auto_watch: bool = False

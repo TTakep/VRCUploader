@@ -76,6 +76,11 @@ class SettingsWidget(QWidget):
         self.webhook_input.setPlaceholderText("https://discord.com/api/webhooks/...")
         webhook_layout.addRow("Webhook URL:", self.webhook_input)
         
+        self.webhook_username_input = QLineEdit()
+        self.webhook_username_input.setPlaceholderText("VRChat 撮影転送")
+        self.webhook_username_input.setMaxLength(80)
+        webhook_layout.addRow("Webhook名:", self.webhook_username_input)
+        
         webhook_buttons = QHBoxLayout()
         self.show_webhook_btn = QPushButton("表示/非表示")
         self.show_webhook_btn.clicked.connect(self._toggle_webhook_visibility)
@@ -116,6 +121,9 @@ class SettingsWidget(QWidget):
         
         self.monthly_thread_check = QCheckBox("月別スレッド機能を有効にする (YYYY-MM形式)")
         thread_layout.addWidget(self.monthly_thread_check)
+        
+        self.instance_users_check = QCheckBox("撮影時に同じインスタンスにいたユーザー名を一緒に送信する")
+        thread_layout.addWidget(self.instance_users_check)
         
         layout.addWidget(thread_group)
         
@@ -205,8 +213,10 @@ class SettingsWidget(QWidget):
         config = config_manager.config
         
         self.webhook_input.setText(config.webhook_url)
+        self.webhook_username_input.setText(config.webhook_username)
         self.folder_input.setText(config.watch_folder)
         self.monthly_thread_check.setChecked(config.enable_monthly_thread)
+        self.instance_users_check.setChecked(config.enable_instance_users)
         self.compression_threshold.setValue(int(config.compression_threshold_mb))
         self.auto_startup_check.setChecked(config.enable_auto_startup)
         self.minimize_to_tray_check.setChecked(config.enable_minimize_to_tray)
@@ -222,8 +232,10 @@ class SettingsWidget(QWidget):
         """設定を保存"""
         config_manager.update(
             webhook_url=self.webhook_input.text(),
+            webhook_username=self.webhook_username_input.text() or "VRChat 撮影転送",
             watch_folder=self.folder_input.text(),
             enable_monthly_thread=self.monthly_thread_check.isChecked(),
+            enable_instance_users=self.instance_users_check.isChecked(),
             compression_threshold_mb=float(self.compression_threshold.value()),
             enable_auto_startup=self.auto_startup_check.isChecked(),
             enable_minimize_to_tray=self.minimize_to_tray_check.isChecked(),

@@ -6,7 +6,7 @@ from pathlib import Path
 
 # アプリケーション情報
 APP_NAME = "VRChat Discord Uploader"
-APP_VERSION = "1.1.2"
+APP_VERSION = "1.1.4"
 APP_AUTHOR = "VRCUploader Team"
 
 # ディレクトリパス

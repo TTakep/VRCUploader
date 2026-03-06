@@ -5,7 +5,7 @@ Embed形式での画像転送、リトライ機構
 import time
 import requests
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from datetime import datetime
 
 from src.constants import (
@@ -23,8 +23,9 @@ logger = get_logger()
 class DiscordWebhook:
     """Discord Webhook送信クラス"""
     
-    def __init__(self, webhook_url: str):
+    def __init__(self, webhook_url: str, username: str = "VRChat 撮影転送"):
         self.webhook_url = webhook_url
+        self.username = username
     
     def test_connection(self) -> Tuple[bool, str]:
         """Webhook接続をテスト"""
@@ -48,7 +49,8 @@ class DiscordWebhook:
         original_size: Optional[int] = None,
         compressed_size: Optional[int] = None,
         thread_id: Optional[str] = None,
-        world_name: Optional[str] = None
+        world_name: Optional[str] = None,
+        instance_users: Optional[List[str]] = None
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """画像をDiscordに送信
         
@@ -71,20 +73,25 @@ class DiscordWebhook:
             size_info = format_file_size(file_size)
             compression_status = "圧縮なし"
         
-        # Embedを構築
-        fields = [
-            {
-                "name": "ファイル名",
-                "value": filename,
-                "inline": False
-            }
-        ]
+        fields = []
         
         # ワールド名フィールドを追加
         if world_name:
             fields.append({
                 "name": "🌍 撮影ワールド",
                 "value": world_name,
+                "inline": False
+            })
+            
+        # インスタンスユーザーフィールドを追加
+        if instance_users:
+            users_str = ", ".join(instance_users)
+            # Discord制限（1024文字）を超えないように切り詰め
+            if len(users_str) > 1000:
+                users_str = users_str[:997] + "..."
+            fields.append({
+                "name": f"👥 同一インスタンスのユーザー ({len(instance_users)}人)",
+                "value": users_str,
                 "inline": False
             })
         
@@ -107,8 +114,7 @@ class DiscordWebhook:
         ])
         
         embed = {
-            "title": "📸 VRChat スクリーンショット",
-            "description": "VRChat で撮影された写真が転送されました",
+            "title": filename,
             "timestamp": datetime.utcnow().isoformat(),
             "color": DISCORD_EMBED_COLOR,
             "fields": fields,
@@ -122,7 +128,7 @@ class DiscordWebhook:
         
         # ペイロードを構築
         payload = {
-            "username": "VRChat 撮影転送",
+            "username": self.username,
             "embeds": [embed]
         }
         

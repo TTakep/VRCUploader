@@ -27,6 +27,14 @@ class VRChatLogParser:
         r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) Debug\s+-\s+\[Behaviour\] Entering Room: (.+)"
     )
     
+    # ユーザー参加・退出ログのパターン
+    PLAYER_JOINED_PATTERN = re.compile(
+        r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) Debug\s+-\s+\[Behaviour\] OnPlayerJoined (.+) \(usr_[a-zA-Z0-9-]+\)"
+    )
+    PLAYER_LEFT_PATTERN = re.compile(
+        r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) Debug\s+-\s+\[Behaviour\] OnPlayerLeft (.+) \(usr_[a-zA-Z0-9-]+\)"
+    )
+    
     def __init__(self, log_dir: Optional[Path] = None):
         """
         Args:
@@ -140,6 +148,79 @@ class VRChatLogParser:
         
         return last_world_name
 
+
+    def get_world_and_users_at_time(self, target_time: datetime) -> Tuple[Optional[str], List[str]]:
+        """指定した時刻に居たワールド名とユーザーのリストを取得
+        
+        Args:
+            target_time: 対象の日時（写真撮影時刻）
+            
+        Returns:
+            (ワールド名, ユーザー名のリスト)のタプル
+        """
+        log_file = self.find_log_file_for_time(target_time)
+        if not log_file:
+            logger.debug(f"対応するログファイルが見つかりません: {target_time}")
+            return None, []
+        
+        logger.debug(f"ログファイルを解析中: {log_file.name}")
+        
+        last_world_name = None
+        current_users = set()
+        
+        try:
+            with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    stripped_line = line.strip()
+                    # 先に日付によるスキップ確認を行うための簡単なチェック（最適化）
+                    if not stripped_line.startswith("20") or "Debug" not in stripped_line:
+                        continue
+                    
+                    # 1. ワールド参加チェック
+                    match = self.ENTERING_ROOM_PATTERN.match(stripped_line)
+                    if match:
+                        time_str = match.group(1)
+                        log_time = self.parse_log_line_time(time_str)
+                        if log_time and log_time <= target_time:
+                            last_world_name = match.group(2)
+                            current_users.clear()  # ワールド移動時にリストをクリア
+                        elif log_time and log_time > target_time:
+                            break
+                        continue
+                    
+                    # 2. プレイヤー参加チェック
+                    match = self.PLAYER_JOINED_PATTERN.match(stripped_line)
+                    if match:
+                        time_str = match.group(1)
+                        log_time = self.parse_log_line_time(time_str)
+                        if log_time and log_time <= target_time:
+                            current_users.add(match.group(2))
+                        elif log_time and log_time > target_time:
+                            break
+                        continue
+                        
+                    # 3. プレイヤー退出チェック
+                    match = self.PLAYER_LEFT_PATTERN.match(stripped_line)
+                    if match:
+                        time_str = match.group(1)
+                        log_time = self.parse_log_line_time(time_str)
+                        if log_time and log_time <= target_time:
+                            current_users.discard(match.group(2))
+                        elif log_time and log_time > target_time:
+                            break
+                        continue
+                        
+        except Exception as e:
+            logger.error(f"ログファイルの解析に失敗しました: {e}")
+            return None, []
+        
+        if last_world_name:
+            logger.debug(f"取得結果: ワールド={last_world_name}, ユーザー数={len(current_users)}")
+        else:
+            logger.debug(f"ワールド名が見つかりませんでした: {target_time}")
+            current_users.clear()
+        
+        return last_world_name, sorted(list(current_users))
 
 # シングルトンインスタンス
 vrchat_log_parser = VRChatLogParser()

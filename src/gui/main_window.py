@@ -40,13 +40,15 @@ class TransferWorker(QThread):
     
     def __init__(self, image_path: Path, webhook: DiscordWebhook, 
                  processor: ImageProcessor, thread_manager: Optional[ThreadManager] = None,
-                 enable_monthly_thread: bool = False):
+                 enable_monthly_thread: bool = False,
+                 enable_instance_users: bool = False):
         super().__init__()
         self.image_path = image_path
         self.webhook = webhook
         self.processor = processor
         self.thread_manager = thread_manager
         self.enable_monthly_thread = enable_monthly_thread
+        self.enable_instance_users = enable_instance_users
     
     def run(self):
         try:
@@ -78,12 +80,15 @@ class TransferWorker(QThread):
                     else:
                         logger.warning(f"スレッド作成エラー (日付: {image_date}): {error}")
             
-            # ワールド名を取得
+            # ワールド名とユーザー情報を取得
             world_name = None
+            instance_users = None
             try:
-                world_name = vrchat_log_parser.get_world_name_at_time(image_date)
+                world_name, users = vrchat_log_parser.get_world_and_users_at_time(image_date)
+                if self.enable_instance_users and users:
+                    instance_users = users
             except Exception as e:
-                logger.warning(f"ワールド名の取得に失敗しました: {e}")
+                logger.warning(f"ワールド/ユーザー情報の取得に失敗しました: {e}")
             
             # 送信
             success, message_id, error = self.webhook.send_image(
@@ -91,7 +96,8 @@ class TransferWorker(QThread):
                 original_size=original_size,
                 compressed_size=final_size if was_compressed else None,
                 thread_id=thread_id,
-                world_name=world_name
+                world_name=world_name,
+                instance_users=instance_users
             )
             
             # 一時ファイルを削除
@@ -299,7 +305,7 @@ class MainWindow(QMainWindow):
         
         # Webhookを設定
         if config.webhook_url:
-            self.webhook = DiscordWebhook(config.webhook_url)
+            self.webhook = DiscordWebhook(config.webhook_url, config.webhook_username)
             self.thread_manager = ThreadManager(config.webhook_url)
             self.webhook_label.setText(f"🌐 Webhook URL: {mask_webhook_url(config.webhook_url)}")
         
@@ -413,7 +419,8 @@ class MainWindow(QMainWindow):
             self.webhook,
             self.image_processor,
             self.thread_manager,
-            config.enable_monthly_thread
+            config.enable_monthly_thread,
+            config.enable_instance_users
         )
         worker.finished.connect(self._on_transfer_finished)
         worker.start()
