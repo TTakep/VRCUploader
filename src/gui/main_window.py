@@ -10,7 +10,8 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QGroupBox, QListWidget, QListWidgetItem,
-    QCheckBox, QFrame, QMessageBox, QApplication, QStackedWidget
+    QCheckBox, QFrame, QMessageBox, QApplication, QStackedWidget,
+    QProgressDialog
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QIcon, QCloseEvent, QFont
@@ -23,6 +24,7 @@ from src.core.thread_manager import ThreadManager
 from src.core.image_processor import ImageProcessor
 from src.core.file_watcher import FileWatcher
 from src.core.vrchat_log_parser import vrchat_log_parser
+from src.core.updater import UpdateCheckWorker, UpdateDownloadWorker, Updater
 from src.db.repository import transfer_repository
 from src.db.models import TransferRecord
 from src.gui.settings_widget import SettingsWidget
@@ -152,6 +154,9 @@ class MainWindow(QMainWindow):
         # 自動監視開始
         if config_manager.config.enable_auto_watch:
             QTimer.singleShot(100, self._start_watching)
+            
+        # 更新確認 (自動で実行)
+        self._check_github_updates()
         
         # 定期更新タイマー
         self.update_timer = QTimer()
@@ -522,6 +527,54 @@ class MainWindow(QMainWindow):
         self.show()
         self.activateWindow()
         self.raise_()
+        
+    # --- 自動アップデート処理 ---
+    
+    def _check_github_updates(self):
+        """非同期でGitHubのアップデートを確認"""
+        self.update_checker = UpdateCheckWorker()
+        self.update_checker.update_available.connect(self._prompt_update)
+        # エラーや更新なしの場合は特にUIを出さない（バックグラウンド処理）
+        self.update_checker.start()
+        
+    def _prompt_update(self, version: str, release_notes: str, download_url: str):
+        """アップデートを促すダイアログを表示"""
+        msg = QMessageBox(self)
+        msg.setWindowTitle("アップデートのお知らせ")
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.setText(f"新しいバージョン (v{version}) が利用可能です！")
+        
+        notes_preview = release_notes[:200] + ("..." if len(release_notes) > 200 else "")
+        msg.setDetailedText(f"リリースノート:\n{release_notes}")
+        msg.setInformativeText(f"今すぐダウンロードしてインストールしますか？\n\n【更新内容のプレビュー】\n{notes_preview}")
+        
+        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msg.setDefaultButton(QMessageBox.StandardButton.Yes)
+        
+        button = msg.exec()
+        
+        if button == QMessageBox.StandardButton.Yes:
+            self._start_update_download(download_url)
+            
+    def _start_update_download(self, url: str):
+        """インストーラーのダウンロードを開始"""
+        self.progress_dialog = QProgressDialog("インストーラーをダウンロード中...", "キャンセル", 0, 100, self)
+        self.progress_dialog.setWindowTitle("アップデート")
+        self.progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
+        self.progress_dialog.setAutoClose(True)
+        
+        self.downloader = UpdateDownloadWorker(url)
+        self.downloader.progress_changed.connect(self.progress_dialog.setValue)
+        self.downloader.download_finished.connect(self._on_download_finished)
+        
+        self.progress_dialog.canceled.connect(self.downloader.terminate)
+        
+        self.progress_dialog.show()
+        self.downloader.start()
+        
+    def _on_download_finished(self, installer_path: str):
+        """ダウンロード完了後、インストーラーを起動"""
+        Updater.execute_installer(installer_path)
     
     def _quit_app(self):
         """アプリケーションを終了"""

@@ -6,8 +6,12 @@ from pathlib import Path
 
 # アプリケーション情報
 APP_NAME = "VRChat Discord Uploader"
-APP_VERSION = "1.1.4"
+APP_VERSION = "1.1.5"
 APP_AUTHOR = "VRCUploader Team"
+
+# 自動アップデート関連設定
+GITHUB_REPO = "TTakep/VRCUploader"
+GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
 # ディレクトリパス
 APPDATA_DIR = Path(os.environ.get("APPDATA", "")) / "VRChatDiscordUploader"

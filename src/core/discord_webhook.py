@@ -23,7 +23,7 @@ logger = get_logger()
 class DiscordWebhook:
     """Discord Webhook送信クラス"""
     
-    def __init__(self, webhook_url: str, username: str = "VRChat 撮影転送"):
+    def __init__(self, webhook_url: str, username: str = "VRChat"):
         self.webhook_url = webhook_url
         self.username = username
     

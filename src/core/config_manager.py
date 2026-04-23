@@ -19,7 +19,7 @@ class Config:
     """アプリケーション設定"""
     # Webhook設定
     webhook_url: str = ""
-    webhook_username: str = "VRChat 撮影転送"
+    webhook_username: str = "VRChat"
     
     # 監視設定
     watch_folder: str = str(VRCHAT_DEFAULT_PICTURES_PATH)

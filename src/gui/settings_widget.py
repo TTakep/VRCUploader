@@ -77,7 +77,7 @@ class SettingsWidget(QWidget):
         webhook_layout.addRow("Webhook URL:", self.webhook_input)
         
         self.webhook_username_input = QLineEdit()
-        self.webhook_username_input.setPlaceholderText("VRChat 撮影転送")
+        self.webhook_username_input.setPlaceholderText("VRChat")
         self.webhook_username_input.setMaxLength(80)
         webhook_layout.addRow("Webhook名:", self.webhook_username_input)
         
@@ -232,7 +232,7 @@ class SettingsWidget(QWidget):
         """設定を保存"""
         config_manager.update(
             webhook_url=self.webhook_input.text(),
-            webhook_username=self.webhook_username_input.text() or "VRChat 撮影転送",
+            webhook_username=self.webhook_username_input.text() or "VRChat",
             watch_folder=self.folder_input.text(),
             enable_monthly_thread=self.monthly_thread_check.isChecked(),
             enable_instance_users=self.instance_users_check.isChecked(),
